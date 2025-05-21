@@ -27,7 +27,7 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
             // ✅ Отображаем кроссворд, если удалось построить
             crossword?.let {
                 CrosswordView(it)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(Visual.paddingBetweenBlocks))
             }
         }
 

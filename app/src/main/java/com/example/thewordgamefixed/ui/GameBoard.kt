@@ -28,12 +28,11 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
 
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
-    // --- ✅ НАСТРОЙКИ ВИЗУАЛА ---
-    val starSize = 220.dp             // ⬅️ общий размер области звезды
-    val radiusDp = 80.dp              // ⬅️ радиус звезды
-    val letterCircleSize = 32.dp      // ⬅️ размер буквы
-    val letterFontSize = 20.sp        // ⬅️ размер шрифта
-    val touchRadius = 30.dp           // ⬅️ радиус для свайпа
+    val starSize = Visual.starSize
+    val radiusDp = Visual.starRadius
+    val letterCircleSize = Visual.letterCircleSize
+    val letterFontSize = Visual.letterFontSize
+    val touchRadius = Visual.swipeTouchRadius
     // ---------------------------
 
     val radiusPx = with(density) { radiusDp.toPx() }
