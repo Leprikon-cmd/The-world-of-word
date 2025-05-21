@@ -1,10 +1,9 @@
-// Главный экран игры: отображает кроссворд и звезду
-
 package com.example.thewordgamefixed.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.thewordgamefixed.logic.GameLogic
@@ -20,16 +19,26 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.SpaceBetween, // ⬅️ Разделим верх/низ
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // ✅ Отображаем кроссворд, если удалось построить
-        crossword?.let {
-            CrosswordView(it)
-            Spacer(modifier = Modifier.height(24.dp))
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // ✅ Отображаем кроссворд, если удалось построить
+            crossword?.let {
+                CrosswordView(it)
+                Spacer(modifier = Modifier.height(24.dp))
+            }
         }
 
-        // ✅ Отображаем игровую звезду
-        GameBoard(viewModel)
+        // ✅ Отображаем игровую звезду внизу, но с запасом
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 26.dp), // ➕ Отступ от нижнего края
+            contentAlignment = Alignment.Center
+        ) {
+            GameBoard(viewModel)
+        }
     }
 }

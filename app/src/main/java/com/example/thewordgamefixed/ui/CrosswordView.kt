@@ -33,11 +33,11 @@ fun CrosswordView(crossword: CrosswordBuilder.CrosswordResult) {
                         Box(
                             modifier = Modifier
                                 .size(cellSize)
-                                .background(if (c != ' ') Color.LightGray else Color.Transparent),
+                                .padding(1.dp), // 🔧 добавлен отступ между ячейками
                             contentAlignment = Alignment.Center
                         ) {
                             if (c != ' ') {
-                                Text(c.toString(), fontSize = 20.sp) // увеличен шрифт
+                                Text(text = c.toString(), fontSize = 20.sp)
                             }
                         }
                     }
