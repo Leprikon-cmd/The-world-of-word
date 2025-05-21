@@ -9,27 +9,38 @@ object LetterSetGenerator {
     fun generateSet(): LetterSet? {
         val words = DictionaryManager.getWords()
 
-        // Фильтруем только слова длиной от 5 и без повторяющихся букв
-        val candidateWords = words.filter { it.length == LETTER_COUNT && it.toSet().size == LETTER_COUNT }
+        // ✅ Слова из 5 уникальных букв
+        val candidateWords = words.filter {
+            it.length == LETTER_COUNT && it.toSet().size == LETTER_COUNT
+        }.shuffled() // сразу перемешаем
 
-        val shuffledCandidates = candidateWords.shuffled()
-
-        for (baseWord in shuffledCandidates) {
+        for (baseWord in candidateWords) {
             val letters = baseWord.toSet().toList()
 
-            // Ищем все слова длиной 3–5 букв, составленные из этих букв
+            // ✅ Ищем все слова, которые можно составить из этих букв (от 3 до 5 символов, без повторов)
             val matchingWords = words.filter { w ->
-                w.length in 3..5 && w.all { it in letters }
-            }.toSet()
+                w.length in 3..5 &&
+                        w.all { it in letters } &&
+                        w.toSet().size == w.length // 🔥 исключаем слова с повторяющимися буквами
+            }
 
-            // Проверим, что среди них хотя бы MIN_VALID_WORDS и желательно — не однотипных
-            val distinctFirstLetters = matchingWords.map { it.first() }.toSet()
-            if (matchingWords.size >= MIN_VALID_WORDS && distinctFirstLetters.size >= 3) {
-                return LetterSet(letters, matchingWords)
+            // ✅ Проверка разнообразия — хотя бы 3 разные первые буквы
+            val groupedByFirst = matchingWords.groupBy { it.first() }
+
+            // Обрезаем: не более 2 слов от каждой первой буквы
+            val limited = groupedByFirst.values
+                .flatMap { it.take(2) } // <= здесь ограничиваем 2 словами на букву
+                .take(MIN_VALID_WORDS)
+
+            val distinctFirstLetters = limited.map { it.first() }.toSet()
+
+            if (limited.size >= MIN_VALID_WORDS && distinctFirstLetters.size >= 3) {
+                return LetterSet(letters, limited.toSet())
             }
         }
 
-        return null // Не удалось найти подходящий набор
+        // ❗ Этот return должен быть ВНЕ цикла
+        return null // Не нашли подходящий набор — можно будет попробовать ещё раз
     }
 
     data class LetterSet(

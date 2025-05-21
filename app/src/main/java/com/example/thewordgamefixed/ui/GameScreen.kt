@@ -1,33 +1,35 @@
-// Экран игры: включает кроссворд и звезду
+// Главный экран игры: отображает кроссворд и звезду
 
 package com.example.thewordgamefixed.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.thewordgamefixed.logic.GameLogic
+import com.example.thewordgamefixed.logic.CrosswordBuilder
 import com.example.thewordgamefixed.viewmodel.GameViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun GameScreen(viewModel: GameViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun GameScreen(viewModel: GameViewModel = viewModel()) {
+    val words = GameLogic.getCurrentWords().toList()
+    val crossword = CrosswordBuilder.buildCrossword(words)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(32.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Top
     ) {
-        // Кроссворд (5 слов сверху)
-        CrosswordView(GameLogic.getCurrentWords())
+        // ✅ Отображаем кроссворд, если удалось построить
+        crossword?.let {
+            CrosswordView(it)
+            Spacer(modifier = Modifier.height(24.dp))
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Звезда из букв
+        // ✅ Отображаем игровую звезду
         GameBoard(viewModel)
     }
 }
