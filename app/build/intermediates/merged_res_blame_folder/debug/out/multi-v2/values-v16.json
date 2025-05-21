@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.example.thewordgamefixed.app-mergeDebugResources-42:/values-v16/values-v16.xml",
+            "map": [
+                {
+                    "source": "/Users/ez/.gradle/caches/8.12/transforms/942c4cd72ad3b4a0080b3ea3ee8e2670/transformed/core-1.12.0/res/values-v16/values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "65",
+                        "endOffsets": "116"
+                    }
+                }
+            ]
+        }
+    ]
+}

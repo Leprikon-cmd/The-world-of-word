@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">The Word Game Fixed</string>
+    <style name="Theme.TheWordGameFixed" parent="Theme.Material3.DayNight">
+        
+    </style>
+</resources>
