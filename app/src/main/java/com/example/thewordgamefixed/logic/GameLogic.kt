@@ -4,7 +4,7 @@
 package com.example.thewordgamefixed.logic
 
 import com.example.thewordgamefixed.logic.DictionaryManager
-import com.example.thewordgamefixed.logic.LetterSetGenerator // ✅ нужный импорт
+import com.example.thewordgamefixed.logic.LetterSetGenerator
 
 // ++ Логика текущей звезды: буквы + допустимые слова
 object GameLogic {
@@ -28,14 +28,22 @@ object GameLogic {
         }
     }
 
-    fun getCurrentWords(): List<String> { // получаем 5 слов
-        return validWords.filter { it.length in 3..5 }.take(5)
-    }
-
     fun getLetters(): List<Char> = currentLetters
 
     fun isValidWord(input: String): Boolean {
         val word = input.uppercase()
-        return validWords.contains(word)
+        return word.length >= 3 && validWords.contains(word)
     }
+
+    // 🔍 Проверяет, можно ли составить слово поштучно из букв набора
+    private fun canBuildWord(word: String, letters: List<Char>): Boolean {
+        val available = letters.groupingBy { it }.eachCount().toMutableMap()
+        for (c in word) {
+            val count = available.getOrDefault(c, 0)
+            if (count == 0) return false
+            available[c] = count - 1
+        }
+        return true
+    }
+    fun getValidWords(): List<String> = validWords.toList()
 }

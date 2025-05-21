@@ -1,6 +1,3 @@
-// ViewModel: хранит текущее слово и результат (верно/неверно)
-// Связывает GameBoard и GameScreen — единый источник правды
-
 package com.example.thewordgamefixed.viewmodel
 
 import androidx.compose.runtime.mutableStateListOf
@@ -12,6 +9,8 @@ class GameViewModel : ViewModel() {
     val selectedLetters = mutableStateListOf<Char>()
     val result = mutableStateOf("")
 
+    private var lastAddedChar: Char? = null // 🧠 защита от многократного тапа по той же букве подряд
+
     fun validateWord() {
         val word = selectedLetters.joinToString("")
         result.value = if (GameLogic.isValidWord(word)) {
@@ -22,14 +21,13 @@ class GameViewModel : ViewModel() {
     }
 
     fun addLetter(letter: Char) {
-        if (!selectedLetters.contains(letter)) {
-            selectedLetters.add(letter)
-        }
+        selectedLetters.add(letter)
     }
 
     fun clearSelection() {
         selectedLetters.clear()
-        result.value = "" // сброс результата при начале нового слова
+        result.value = ""
+        lastAddedChar = null // сбрасываем для нового слова
     }
 
     fun getWord(): String = selectedLetters.joinToString("")

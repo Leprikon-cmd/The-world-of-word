@@ -28,27 +28,30 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
 
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
+    // --- ✅ НАСТРОЙКИ ВИЗУАЛА ---
     val starSize = Visual.starSize
     val radiusDp = Visual.starRadius
     val letterCircleSize = Visual.letterCircleSize
     val letterFontSize = Visual.letterFontSize
     val touchRadius = Visual.swipeTouchRadius
-    // ---------------------------
+    var lastIndex by remember { mutableStateOf<Int?>(null) }
+    var lastFrameMiss = false
 
     val radiusPx = with(density) { radiusDp.toPx() }
     val letterRadiusPx = with(density) { touchRadius.toPx() }
 
+    // 🔁 Храним историю координат, по которым уже свайпали в рамках одного слова
+    val usedIndices = remember { mutableStateListOf<Int>() }
+
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally // ➕ Центруем всё по горизонтали
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 👉 Отображение текущего набранного слова
         Text(
             text = viewModel.getWord(),
             fontSize = 24.sp,
             modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
         )
 
-        // 👉 Отображение результата проверки ("✅ Верно!" / "❌ Неверно")
         Text(
             text = viewModel.result.value,
             fontSize = 18.sp,
@@ -56,54 +59,61 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
             modifier = Modifier.padding(bottom = 60.dp)
         )
 
-        // 👉 Контейнер для звезды из букв
         Box(
             modifier = Modifier
-                .size(starSize) // 📐 общий размер области звезды
+                .size(starSize)
                 .onGloballyPositioned { coordinates ->
-                    boxSize = coordinates.size // сохраняем размер Box в пикселях
+                    boxSize = coordinates.size
                 }
-                .pointerInput(Unit) { // 🔁 Отслеживаем свайпы по звезде
+                .pointerInput(Unit) {
                     detectDragGestures(
                         onDragStart = { offset ->
-                            viewModel.clearSelection() // сбрасываем набранное
-                            checkTouched(offset, starPoints, letterRadiusPx)?.let {
-                                viewModel.addLetter(it) // добавляем букву по нажатию
+                            viewModel.clearSelection()
+                            checkTouched(offset, starPoints, letterRadiusPx)?.let { index ->
+                                val (_, char) = starPoints[index]
+                                viewModel.addLetter(char)
+                                lastIndex = index
+                                lastFrameMiss = false
                             }
                         },
                         onDrag = { change, _ ->
-                            checkTouched(change.position, starPoints, letterRadiusPx)?.let {
-                                viewModel.addLetter(it) // добавляем букву по свайпу
+                            checkTouched(change.position, starPoints, letterRadiusPx)?.let { index ->
+                                if (index != lastIndex || lastFrameMiss) {
+                                    val (_, char) = starPoints[index]
+                                    viewModel.addLetter(char)
+                                    lastIndex = index
+                                    lastFrameMiss = false
+                                }
+                            } ?: run {
+                                lastFrameMiss = true
                             }
                         },
                         onDragEnd = {
-                            viewModel.validateWord() // проверка, когда пользователь отпустил палец
+                            viewModel.validateWord()
+                            lastIndex = null
+                            lastFrameMiss = false
                         }
                     )
                 }
         ) {
             if (boxSize != IntSize.Zero) {
-                val center = Offset(boxSize.width / 2f, boxSize.height / 2f) // 🎯 центр звезды
+                val center = Offset(boxSize.width / 2f, boxSize.height / 2f)
 
-                starPoints.clear() // очищаем старые координаты
-
-                // 🔁 Расставляем 5 букв по кругу в форме пятиконечной звезды
+                starPoints.clear()
                 letters.forEachIndexed { index, letter ->
-                    val angleDeg = -90 + 144 * index // угол для 5-конечной звезды
-                    val angleRad = angleDeg * (PI / 180f) // в радианах
+                    val angleDeg = -90 + 144 * index
+                    val angleRad = angleDeg * (PI / 180f)
                     val x = center.x + cos(angleRad) * radiusPx
                     val y = center.y + sin(angleRad) * radiusPx
                     starPoints.add(Offset(x.toFloat(), y.toFloat()) to letter)
 
-                    // 📦 Отображаем одну из букв звезды
                     Box(
                         modifier = Modifier
                             .offset {
-                                // Центрируем ячейку по координатам
                                 val offset = with(density) { (letterCircleSize / 2).toPx() }
                                 IntOffset((x - offset).toInt(), (y - offset).toInt())
                             }
-                            .size(letterCircleSize), // размер ячейки с буквой
+                            .size(letterCircleSize),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(letter.toString(), fontSize = letterFontSize)
@@ -114,10 +124,11 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
     }
 }
 
-// ✅ Проверка, попал ли пользователь в какую-то букву при свайпе
-fun checkTouched(pos: Offset, points: List<Pair<Offset, Char>>, radius: Float): Char? {
-    for ((offset, char) in points) {
-        if ((offset - pos).getDistance() <= radius) return char
+// ✅ Возвращает индекс буквы, по которой попали при свайпе
+fun checkTouched(pos: Offset, points: List<Pair<Offset, Char>>, radius: Float): Int? {
+    for ((index, pair) in points.withIndex()) {
+        val (offset, _) = pair
+        if ((offset - pos).getDistance() <= radius) return index
     }
     return null
 }
