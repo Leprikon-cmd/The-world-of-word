@@ -19,6 +19,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thewordgamefixed.logic.GameLogic
 import com.example.thewordgamefixed.viewmodel.GameViewModel
 import kotlin.math.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun GameBoard(viewModel: GameViewModel = viewModel()) {
@@ -46,11 +48,18 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = viewModel.getWord(),
-            fontSize = 24.sp,
-            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
-        )
+        Box(
+            modifier = Modifier
+                .padding(top = 12.dp, bottom = 8.dp)
+                .background(Color.White.copy(alpha = 0.6f), shape = CircleShape)
+                .padding(horizontal = 24.dp, vertical = 8.dp)
+        ) {
+            Text(
+                text = viewModel.getWord(),
+                fontSize = 24.sp,
+                color = Color.Black // чтобы чётко читалось
+            )
+        }
 
         Text(
             text = viewModel.result.value,
@@ -89,7 +98,9 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
                             }
                         },
                         onDragEnd = {
-                            viewModel.validateWord()
+                            val word = viewModel.getWord()
+                            viewModel.tryAddWord(word)
+                            viewModel.clearSelection()
                             lastIndex = null
                             lastFrameMiss = false
                         }
@@ -113,7 +124,11 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
                                 val offset = with(density) { (letterCircleSize / 2).toPx() }
                                 IntOffset((x - offset).toInt(), (y - offset).toInt())
                             }
-                            .size(letterCircleSize),
+                            .size(letterCircleSize) // размер круга
+                            .background(
+                                color = Color.White.copy(alpha = 0.6f), // 🔘 белый полупрозрачный
+                                shape = CircleShape
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(letter.toString(), fontSize = letterFontSize)
