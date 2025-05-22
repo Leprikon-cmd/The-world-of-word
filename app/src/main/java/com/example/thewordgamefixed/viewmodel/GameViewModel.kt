@@ -5,9 +5,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.example.thewordgamefixed.logic.GameLogic
 
+
 class GameViewModel : ViewModel() {
     val selectedLetters = mutableStateListOf<Char>()
     val result = mutableStateOf("")
+    val validWords = mutableStateListOf<String>()
 
     private var lastAddedChar: Char? = null // 🧠 защита от многократного тапа по той же букве подряд
 
@@ -18,6 +20,11 @@ class GameViewModel : ViewModel() {
         } else {
             "❌ Неверно"
         }
+    }
+
+    fun updateWords() {
+        validWords.clear()
+        validWords.addAll(GameLogic.getValidWords().sortedByDescending { it.length })
     }
 
     fun addLetter(letter: Char) {
