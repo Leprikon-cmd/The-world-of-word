@@ -2,25 +2,25 @@ package com.example.thewordgamefixed.ui
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.thewordgamefixed.logic.GameLogic
 import com.example.thewordgamefixed.viewmodel.GameViewModel
+import androidx.compose.foundation.shape.CircleShape
 
 @Composable
 fun GameScreen(viewModel: GameViewModel = viewModel()) {
-    // ✅ Загружаем текущий фон из assets
     val context = LocalContext.current
     val imageBitmap = remember(viewModel.backgroundImage.value) {
         val assetManager = context.assets
@@ -28,15 +28,13 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
         BitmapFactory.decodeStream(inputStream)?.asImageBitmap()
     }
 
-    // ✅ Все допустимые слова, отсортированные по длине и алфавиту
-    val words = viewModel.validWords
-        .sortedWith(compareByDescending<String> { it.length }.thenBy { it })
+    LaunchedEffect(Unit) {
+        viewModel.updateWords()
+    }
 
-    val showWordListForDebug = true // ← Меняй на true для отладки
-    val foundWords = viewModel.foundWords
+    var showWordList by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 📷 Фоновое изображение
         imageBitmap?.let {
             Image(
                 bitmap = it,
@@ -46,77 +44,121 @@ fun GameScreen(viewModel: GameViewModel = viewModel()) {
             )
         }
 
-        // 🧩 Основной контент поверх фона
+        if (viewModel.showWinDialog.value) {
+            AlertDialog(
+                onDismissRequest = { viewModel.showWinDialog.value = false },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.showWinDialog.value = false }) {
+                        Text("ОК")
+                    }
+                },
+                title = { Text("🎉 Победа!") },
+                text = { Text("Вы нашли все слова на этом уровне!") }
+            )
+        }
+
+        val symbol = viewModel.lastResultSymbol.value
+
+        symbol?.let {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 150.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = it,
+                    fontSize = 48.sp,
+                    color = if (it == "✅") Color.Green else Color.Red
+                )
+            }
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
-            verticalArrangement = Arrangement.Top,
+            verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-
-            Text(
-                text = "Найдено: ${viewModel.getFoundWordCount()} из ${viewModel.getTotalValidWordCount()}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(bottom = 4.dp)
-            )
-
-            Text(
-                text = "Очки: ${viewModel.score.value}",
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            // 📝 Отображаем список слов — максимум полэкрана
-            if (showWordListForDebug) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
+            // 🔝 Верхняя панель
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 📜 Кнопка списка слов
+                IconButton(
+                    onClick = { showWordList = !showWordList },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 220.dp)
-                        .padding(bottom = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .size(48.dp)
+                        .background(Color.White.copy(alpha = 0.4f), CircleShape)
                 ) {
-                    items(viewModel.validWords) { word ->
-                        val isFound = viewModel.foundWords.contains(word)
+                    Text("📜")
+                }
 
+                // ⬆️ Центр: Найдено + Очки (в столбик)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.4f), shape = CircleShape)
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
                         Text(
-                            text = if (isFound) word else "-".repeat(word.length),
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.padding(4.dp)
+                            text = "Найдено: ${viewModel.getFoundWordCount()} из ${viewModel.getTotalValidWordCount()}",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp)) // небольшой отступ
+
+                    Box(
+                        modifier = Modifier
+                            .background(Color.White.copy(alpha = 0.4f), shape = CircleShape)
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "Очки: ${viewModel.score.value}",
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
-            // 🔘 Кнопка перезапуска
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Button(onClick = {
-                    GameLogic.generateNewLevel()
-                    viewModel.updateWords()         // 🔄 сначала обновляем список слов
-                    viewModel.resetGame()           // 🧹 очищаем всё старое (включая foundWords и score)
-                    viewModel.pickNewBackground()   // 🎨 новый фон
-                }) {
-                    Text("🔄 Новый раунд")
+                // 🔄 Кнопка перезапуска
+                IconButton(
+                    onClick = {
+                        GameLogic.generateNewLevel()
+                        viewModel.updateWords()
+                        viewModel.resetGame()
+                        viewModel.pickNewBackground()
+                    },
+                    modifier = Modifier
+                        .size(48.dp)
+                        .background(Color.White.copy(alpha = 0.4f), CircleShape)
+                ) {
+                    Text("🔄")
                 }
             }
 
-            // ⭐ Звезда — занимает оставшееся место
+            // ⭐ Игровая звезда
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f),
-                contentAlignment = Alignment.Center
+                    .padding(bottom = 12.dp),
+                contentAlignment = Alignment.BottomCenter
             ) {
                 GameBoard(viewModel)
+            }
+        }
+
+        // 📜 Оверлей со списком слов
+        if (showWordList) {
+            WordListOverlay(viewModel = viewModel) {
+                showWordList = false
             }
         }
     }

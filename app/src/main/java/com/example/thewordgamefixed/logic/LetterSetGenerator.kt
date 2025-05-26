@@ -1,4 +1,6 @@
-// Генератор набора букв для игры: выбираем 5 букв и ищем все слова, которые можно составить из них (с повторами)
+// Генератор набора букв для игры: выбираем 5 букв и ищем все слова,
+// которые можно составить из них (с повторами)
+
 package com.example.thewordgamefixed.logic
 
 object LetterSetGenerator {
@@ -16,7 +18,7 @@ object LetterSetGenerator {
 
             // 2️⃣ Находим все слова, которые можно собрать из этих букв с учётом количества каждой
             val matching = words.filter { w ->
-                w.length >= 3 &&
+                w.length >= 2 &&
                         canBuildWord(w, letters)
             }
 
@@ -28,9 +30,10 @@ object LetterSetGenerator {
         return null // ❌ Не удалось — пусть пробует заново
     }
 
-    // 🔧 Проверяет, можно ли собрать слово из available букв (учитывая повторы)
+    // ✅ Разрешает использовать любую букву из набора сколько угодно раз
     private fun canBuildWord(word: String, available: List<Char>): Boolean {
-        return word.all { it in available }
+        val availableSet = available.toSet() // ⬅️ убираем повторы, остаются только уникальные буквы
+        return word.all { it in availableSet }
     }
 
     data class LetterSet(

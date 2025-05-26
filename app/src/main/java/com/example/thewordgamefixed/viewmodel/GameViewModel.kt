@@ -3,14 +3,21 @@ package com.example.thewordgamefixed.viewmodel
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.thewordgamefixed.logic.GameLogic
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class GameViewModel : ViewModel() {
 
     val backgroundImage = mutableStateOf("Background1.jpg") // 🎨 текущий фон
 
+    val lastResultSymbol = mutableStateOf<String?>(null) // Значек угадал не угадал
+
+    val showOverlay = mutableStateOf(false)
+
     fun pickNewBackground() {
-        val index = (1..17).random() // 📸 случайный номер картинки
+        val index = (1..62).random() // 📸 случайный номер картинки
         backgroundImage.value = "Background$index.jpg"
     }
 
@@ -23,6 +30,8 @@ class GameViewModel : ViewModel() {
     private var lastAddedChar: Char? = null // 🧠 защита от многократного тапа по той же букве подряд
 
     val score = mutableStateOf(0) // 🧮 текущий счёт
+
+    val showWinDialog = mutableStateOf(false) // 🏆 победа
 
     fun resetGame() {
         foundWords.clear()              // сбрасываем найденные слова
@@ -40,11 +49,30 @@ class GameViewModel : ViewModel() {
 
     fun tryAddWord(word: String) {
         if (GameLogic.isValidWord(word) && !foundWords.contains(word)) {
-            foundWords.add(word)       // ✅ добавляем слово в найденные
-            addScore(word.length)      // ➕ начисляем очки
-            result.value = "✅ $word"   // сообщение пользователю
+            foundWords.add(word)
+            addScore(word.length)
+            result.value = "✅ $word"
+            lastResultSymbol.value = "✅"
+
+            // ✅ Если все слова угаданы — показать победу
+            if (foundWords.size == GameLogic.getValidWords().size) {
+                showWinDialog.value = true
+            }
+
+            // 🎉 Проверка на полный проход
+            if (foundWords.size == GameLogic.getValidWords().size) {
+                val bonus = foundWords.size * 5
+                score.value += bonus
+                result.value += " 🎁 +$bonus бонусных очков!"
+            }
         } else {
-            result.value = "❌"         // ❌ неправильное слово
+            result.value = "❌"
+            lastResultSymbol.value = "❌"
+        }
+
+        viewModelScope.launch {
+            delay(1500)
+            lastResultSymbol.value = null
         }
     }
 
@@ -54,10 +82,11 @@ class GameViewModel : ViewModel() {
     private fun addScore(length: Int) {
         // 📊 начисляем очки по длине слова
         val base = when (length) {
-            in 3..4 -> 10
+            in 2..3 -> 5
+            4 -> 10
             5 -> 20
             6 -> 30
-            else -> 40 + (length - 6) * 5
+            else -> 40 + (length - 6) * 10
         }
         score.value += base
     }

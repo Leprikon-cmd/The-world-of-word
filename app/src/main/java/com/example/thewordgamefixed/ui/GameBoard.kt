@@ -21,12 +21,18 @@ import com.example.thewordgamefixed.viewmodel.GameViewModel
 import kotlin.math.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.graphics.drawscope.*
+
 
 @Composable
 fun GameBoard(viewModel: GameViewModel = viewModel()) {
     val letters = GameLogic.getLetters()
     val starPoints = remember { mutableStateListOf<Pair<Offset, Char>>() }
     val density = LocalDensity.current
+    val selectedIndices = remember { mutableStateListOf<Int>() } // подсветка буквы
+
+    val selectedPoints = remember { mutableStateListOf<Offset>() } // 🧠 путь свайпа
 
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
@@ -44,6 +50,8 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
 
     // 🔁 Храним историю координат, по которым уже свайпали в рамках одного слова
     val usedIndices = remember { mutableStateListOf<Int>() }
+
+    val symbol = viewModel.lastResultSymbol.value
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
@@ -78,9 +86,12 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
                     detectDragGestures(
                         onDragStart = { offset ->
                             viewModel.clearSelection()
+                            selectedIndices.clear() // ✅ сброс выделения
                             checkTouched(offset, starPoints, letterRadiusPx)?.let { index ->
                                 val (_, char) = starPoints[index]
                                 viewModel.addLetter(char)
+                                selectedPoints.add(starPoints[index].first) // ✅ координаты точки
+                                selectedIndices.add(index) // ✅ подсветим
                                 lastIndex = index
                                 lastFrameMiss = false
                             }
@@ -90,6 +101,8 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
                                 if (index != lastIndex || lastFrameMiss) {
                                     val (_, char) = starPoints[index]
                                     viewModel.addLetter(char)
+                                    selectedPoints.add(starPoints[index].first) // ✅ координаты точки
+                                    selectedIndices.add(index) // ✅ добавим в подсветку
                                     lastIndex = index
                                     lastFrameMiss = false
                                 }
@@ -101,16 +114,31 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
                             val word = viewModel.getWord()
                             viewModel.tryAddWord(word)
                             viewModel.clearSelection()
+                            selectedIndices.clear() // ✅ очищаем
+                            selectedPoints.clear()
                             lastIndex = null
                             lastFrameMiss = false
                         }
                     )
+                    selectedPoints.clear()
                 }
         ) {
             if (boxSize != IntSize.Zero) {
                 val center = Offset(boxSize.width / 2f, boxSize.height / 2f)
 
                 starPoints.clear()
+
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    for (i in 0 until selectedPoints.size - 1) {
+                        drawLine(
+                            color = Color.Yellow,
+                            start = selectedPoints[i],
+                            end = selectedPoints[i + 1],
+                            strokeWidth = 8f // 👉 толщина линии
+                        )
+                    }
+                }
+
                 letters.forEachIndexed { index, letter ->
                     val angleDeg = -90 + 144 * index
                     val angleRad = angleDeg * (PI / 180f)
@@ -126,7 +154,10 @@ fun GameBoard(viewModel: GameViewModel = viewModel()) {
                             }
                             .size(letterCircleSize) // размер круга
                             .background(
-                                color = Color.White.copy(alpha = 0.6f), // 🔘 белый полупрозрачный
+                                color = if (selectedIndices.contains(index))
+                                    Color.Yellow.copy(alpha = 0.7f) // 🔆 выделено
+                                else
+                                    Color.White.copy(alpha = 0.6f),
                                 shape = CircleShape
                             ),
                         contentAlignment = Alignment.Center

@@ -1,8 +1,27 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.thewordgamefixed.app-mergeDebugResources-43:/values-v16/values-v16.xml",
+            "outputFile": "com.example.thewordgamefixed.app-mergeDebugResources-48:/values-v16/values-v16.xml",
             "map": [
+                {
+                    "source": "/Users/ez/.gradle/caches/8.12/transforms/2dcf78fc7dc57a85ca38c043f6461bd6/transformed/appcompat-1.6.1/res/values-v16/values-v16.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endLines": "5",
+                        "endColumns": "12",
+                        "endOffsets": "223"
+                    },
+                    "to": {
+                        "startLines": "3",
+                        "startColumns": "4",
+                        "startOffsets": "121",
+                        "endLines": "6",
+                        "endColumns": "12",
+                        "endOffsets": "289"
+                    }
+                },
                 {
                     "source": "/Users/ez/.gradle/caches/8.12/transforms/5900b64442e885664cd7e03df696c1b3/transformed/core-1.12.0/res/values-v16/values-v16.xml",
                     "from": {
